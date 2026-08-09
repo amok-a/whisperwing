@@ -1,0 +1,19 @@
+[project]
+name = "whisperwing"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Artem Folinger",email = "folingerzlive@gmail.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyaudiowpatch (>=0.2.12.8,<0.3.0.0)"
+]
+
+[tool.poetry]
+packages = [{include = "whisperwing", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

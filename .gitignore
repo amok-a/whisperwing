@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Poetry / venv
+.venv/
+venv/
+dist/
+*.egg-info/
+
+# Audio test files
+*.wav
+*.mp3
+
+# Env / secrets
+.env
+.env.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
