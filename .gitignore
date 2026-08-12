@@ -1,9 +1,18 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
+.venv/
+venv/
+dist/
+*.egg-info/
+*.wav
+.env
+.env.*
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
 
 # Poetry / venv
 .venv/
