@@ -10,7 +10,7 @@ __pycache__/
 venv/
 dist/
 *.egg-info/
-
+debug_chunk_*.wav
 # Audio test files
 *.wav
 *.mp3
