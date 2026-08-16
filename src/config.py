@@ -29,3 +29,8 @@ ANTHROPIC_MODEL = "claude-sonnet-5"
 # Ollama
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "llama3.1:8b")
+WHISPER_INITIAL_PROMPT = (
+    "Технический созвон разработчиков. Встречаются термины: "
+    "HTTP, HTTPS, API, JSON, SQL, REST, backend, frontend, database, "
+    "Python, Docker, Kubernetes, инкапсуляция, полиморфизм, наследование."
+)

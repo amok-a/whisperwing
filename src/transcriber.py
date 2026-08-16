@@ -50,6 +50,7 @@ def transcriber_thread(
                 vad_filter=True,
                 vad_parameters=dict(min_silence_duration_ms=500),
                 condition_on_previous_text=False,
+                initial_prompt=config.WHISPER_INITIAL_PROMPT,
             )
             text = " ".join(seg.text for seg in segments).strip()
 
