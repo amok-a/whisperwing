@@ -1,11 +1,7 @@
 import pyaudiowpatch as pyaudio
-import audioop
 import threading
 import time
-import wave
 import queue
-
-from . import config
 
 
 def find_loopback_device(p):
@@ -19,36 +15,13 @@ def find_loopback_device(p):
     return default_speakers
 
 
-def save_debug_wav(audio_bytes, rate, channels, filename):
-    wf = wave.open(filename, "wb")
-    wf.setnchannels(channels)
-    wf.setsampwidth(2)
-    wf.setframerate(rate)
-    wf.writeframes(audio_bytes)
-    wf.close()
-
-
-def resample_audio_bytes(audio_bytes, orig_rate, channels, target_rate=config.TARGET_SAMPLE_RATE):
-    if orig_rate == target_rate:
-        return audio_bytes
-    resampled_bytes, _ = audioop.ratecv(audio_bytes, 2, channels, orig_rate, target_rate, None)
-    return resampled_bytes
-
-
-def recorder_thread(device, rate, channels, audio_queue: queue.Queue, stop_event: threading.Event):
+def recorder_thread(device, rate, channels, raw_queue: queue.Queue, stop_event: threading.Event):
+    """Просто пишет звук и кидает сырые чанки в очередь.
+    Нарезкой на фразы теперь занимается VAD-сегментер в отдельном потоке."""
     p = pyaudio.PyAudio()
-    frames = []
-    chunk_frame_count = 0
-    frames_per_chunk = int(rate * config.CHUNK_SECONDS)
 
     def callback(in_data, frame_count, time_info, status):
-        nonlocal frames, chunk_frame_count
-        frames.append(in_data)
-        chunk_frame_count += frame_count
-        if chunk_frame_count >= frames_per_chunk:
-            audio_queue.put(b"".join(frames))
-            frames.clear()
-            chunk_frame_count = 0
+        raw_queue.put(in_data)
         return (in_data, pyaudio.paContinue)
 
     stream = p.open(
