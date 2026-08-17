@@ -6,6 +6,7 @@ import pyaudiowpatch as pyaudio
 
 from . import config
 from .audio_capture import find_loopback_device, recorder_thread
+from .vad_segmenter import segmenter_thread
 from .transcriber import load_whisper_model, transcriber_thread
 from .conversation_buffer import ConversationBuffer
 from .llm.factory import get_llm_client
@@ -31,21 +32,25 @@ def main():
     model = load_whisper_model()
     print("Модель загружена.")
 
-    audio_queue = queue.Queue()
+    raw_queue = queue.Queue()
+    speech_queue = queue.Queue()
     stop_event = threading.Event()
     buffer = ConversationBuffer()
 
     register_explain_hotkey(buffer, llm_client)
 
     rec_thread = threading.Thread(
-        target=recorder_thread, args=(device, rate, channels, audio_queue, stop_event)
+        target=recorder_thread, args=(device, rate, channels, raw_queue, stop_event)
+    )
+    seg_thread = threading.Thread(
+        target=segmenter_thread, args=(rate, channels, raw_queue, speech_queue, stop_event)
     )
     trans_thread = threading.Thread(
-        target=transcriber_thread,
-        args=(model, rate, channels, audio_queue, stop_event, buffer),
+        target=transcriber_thread, args=(model, speech_queue, stop_event, buffer)
     )
 
     rec_thread.start()
+    seg_thread.start()
     trans_thread.start()
 
     print(f"Слушаю... ({config.EXPLAIN_HOTKEY} — объяснить, Ctrl+C — остановить)")
@@ -58,6 +63,7 @@ def main():
         stop_event.set()
 
     rec_thread.join(timeout=3)
+    seg_thread.join(timeout=3)
     trans_thread.join(timeout=3)
     print("Остановлено.")
 
