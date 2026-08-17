@@ -12,8 +12,6 @@ FRAME_BYTES_16K_MONO = int(config.TARGET_SAMPLE_RATE * FRAME_MS / 1000) * BYTES_
 
 
 class VadSegmenter:
-    """Слушает сырой аудиопоток, определяет границы фраз по паузам (VAD)
-    и кладёт в очередь уже нарезанные по смыслу куски речи (16kHz, моно)."""
 
     def __init__(self, orig_rate: int, channels: int):
         self._orig_rate = orig_rate
