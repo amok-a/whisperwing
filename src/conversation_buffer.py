@@ -7,7 +7,7 @@ from . import config
 class ConversationBuffer:
     def __init__(self, minutes: int = config.BUFFER_MINUTES):
         self._minutes = minutes
-        self._items = []  # (timestamp, text)
+        self._items: list[tuple[float, str]] = []  # (timestamp, text)
         self._lock = threading.Lock()
 
     def append(self, text: str):
