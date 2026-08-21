@@ -10,7 +10,7 @@ from .vad_segmenter import segmenter_thread
 from .transcriber import load_whisper_model, transcriber_thread
 from .conversation_buffer import ConversationBuffer
 from .llm.factory import get_llm_client
-from .hotkeys import register_explain_hotkey
+from .hotkeys import register_explain_hotkey, register_listen_toggle_hotkey
 
 
 def main():
@@ -35,12 +35,17 @@ def main():
     raw_queue = queue.Queue()
     speech_queue = queue.Queue()
     stop_event = threading.Event()
+    listening_event = threading.Event()
+    if config.LISTEN_ON_START:
+        listening_event.set()
     buffer = ConversationBuffer()
 
     register_explain_hotkey(buffer, llm_client)
+    register_listen_toggle_hotkey(listening_event, buffer)
 
     rec_thread = threading.Thread(
-        target=recorder_thread, args=(device, rate, channels, raw_queue, stop_event)
+        target=recorder_thread,
+        args=(device, rate, channels, raw_queue, stop_event, listening_event),
     )
     seg_thread = threading.Thread(
         target=segmenter_thread, args=(rate, channels, raw_queue, speech_queue, stop_event)
@@ -53,7 +58,13 @@ def main():
     seg_thread.start()
     trans_thread.start()
 
-    print(f"Слушаю... ({config.EXPLAIN_HOTKEY} — объяснить, Ctrl+C — остановить)")
+    status = "включено" if listening_event.is_set() else "выключено"
+    print(
+        f"Готово. Прослушивание сейчас: {status}.\n"
+        f"  {config.LISTEN_TOGGLE_HOTKEY} — вкл/выкл прослушивание\n"
+        f"  {config.EXPLAIN_HOTKEY} — объяснить последние минуты\n"
+        f"  Ctrl+C — выйти"
+    )
 
     try:
         while rec_thread.is_alive():
