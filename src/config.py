@@ -37,3 +37,7 @@ ANTHROPIC_MODEL = "claude-sonnet-5"
 # Ollama
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
+
+# Старт/стоп прослушивания
+LISTEN_TOGGLE_HOTKEY = "ctrl+shift+l"
+LISTEN_ON_START = False  # запускать ли прослушивание сразу при старте скрипта

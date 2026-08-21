@@ -15,13 +15,19 @@ def find_loopback_device(p):
     return default_speakers
 
 
-def recorder_thread(device, rate, channels, raw_queue: queue.Queue, stop_event: threading.Event):
-    """Просто пишет звук и кидает сырые чанки в очередь.
-    Нарезкой на фразы теперь занимается VAD-сегментер в отдельном потоке."""
+def recorder_thread(
+    device,
+    rate,
+    channels,
+    raw_queue: queue.Queue,
+    stop_event: threading.Event,
+    listening_event: threading.Event,
+):
     p = pyaudio.PyAudio()
 
     def callback(in_data, frame_count, time_info, status):
-        raw_queue.put(in_data)
+        if listening_event.is_set():
+            raw_queue.put(in_data)
         return (in_data, pyaudio.paContinue)
 
     stream = p.open(

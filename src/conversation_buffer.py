@@ -21,3 +21,7 @@ class ConversationBuffer:
     def get_text(self) -> str:
         with self._lock:
             return " ".join(text for _, text in self._items)
+
+    def clear(self):
+        with self._lock:
+            self._items.clear()

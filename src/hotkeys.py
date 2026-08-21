@@ -12,6 +12,19 @@ def register_explain_hotkey(buffer, llm_client):
     keyboard.add_hotkey(config.EXPLAIN_HOTKEY, on_hotkey)
 
 
+def register_listen_toggle_hotkey(listening_event: threading.Event, buffer):
+    def on_toggle():
+        if listening_event.is_set():
+            listening_event.clear()
+            print("\n[⏸ Прослушивание остановлено]\n")
+        else:
+            buffer.clear()
+            listening_event.set()
+            print("\n[▶ Прослушивание запущено (буфер очищен)]\n")
+
+    keyboard.add_hotkey(config.LISTEN_TOGGLE_HOTKEY, on_toggle)
+
+
 def _explain(buffer, llm_client):
     transcript = buffer.get_text()
     if not transcript:
