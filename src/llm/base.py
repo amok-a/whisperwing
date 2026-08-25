@@ -7,6 +7,12 @@ class LLMClient(ABC):
         """Принимает фрагмент транскрипта, возвращает объяснение."""
         raise NotImplementedError
 
+    @abstractmethod
+    def explain_image(self, image_bytes: bytes, context: str) -> str:
+        """Принимает PNG-байты скриншота и текстовый контекст разговора,
+        возвращает объяснение того, что на изображении."""
+        raise NotImplementedError
+
 
 EXPLAIN_SYSTEM_PROMPT = (
     "Ты помогаешь бэкенд-разработчику быстро отвечать на вопросы IT "

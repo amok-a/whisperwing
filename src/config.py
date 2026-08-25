@@ -41,3 +41,9 @@ OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
 # Старт/стоп прослушивания
 LISTEN_TOGGLE_HOTKEY = "ctrl+shift+l"
 LISTEN_ON_START = False  # запускать ли прослушивание сразу при старте скрипта
+
+# Захват экрана
+SCREEN_HOTKEY = "ctrl+shift+s"
+
+# Ollama vision-модель (отдельно от текстовой)
+OLLAMA_VISION_MODEL = os.environ.get("OLLAMA_VISION_MODEL", "llava:7b")
