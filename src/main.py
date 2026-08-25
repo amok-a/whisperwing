@@ -10,7 +10,11 @@ from .vad_segmenter import segmenter_thread
 from .transcriber import load_whisper_model, transcriber_thread
 from .conversation_buffer import ConversationBuffer
 from .llm.factory import get_llm_client
-from .hotkeys import register_explain_hotkey, register_listen_toggle_hotkey
+from .hotkeys import (
+    register_explain_hotkey,
+    register_listen_toggle_hotkey,
+    register_screen_hotkey,
+)
 
 
 def main():
@@ -42,6 +46,7 @@ def main():
 
     register_explain_hotkey(buffer, llm_client)
     register_listen_toggle_hotkey(listening_event, buffer)
+    register_screen_hotkey(buffer, llm_client)
 
     rec_thread = threading.Thread(
         target=recorder_thread,
@@ -63,6 +68,7 @@ def main():
         f"Готово. Прослушивание сейчас: {status}.\n"
         f"  {config.LISTEN_TOGGLE_HOTKEY} — вкл/выкл прослушивание\n"
         f"  {config.EXPLAIN_HOTKEY} — объяснить последние минуты\n"
+        f"  {config.SCREEN_HOTKEY} — выделить область экрана и объяснить\n"
         f"  Ctrl+C — выйти"
     )
 
