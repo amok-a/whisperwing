@@ -1,20 +1,20 @@
+import sys
 import queue
 import threading
-import time
 
 import pyaudiowpatch as pyaudio
+from PyQt6.QtWidgets import QApplication
 
 from . import config
+from . import actions
 from .audio_capture import find_loopback_device, recorder_thread
 from .vad_segmenter import segmenter_thread
 from .transcriber import load_whisper_model, transcriber_thread
 from .conversation_buffer import ConversationBuffer
 from .llm.factory import get_llm_client
-from .hotkeys import (
-    register_explain_hotkey,
-    register_listen_toggle_hotkey,
-    register_screen_hotkey,
-)
+from .signals import Signals
+from .overlay import OverlayWindow
+from .hotkeys import register_hotkeys
 
 
 def main():
@@ -44,45 +44,49 @@ def main():
         listening_event.set()
     buffer = ConversationBuffer()
 
-    register_explain_hotkey(buffer, llm_client)
-    register_listen_toggle_hotkey(listening_event, buffer)
-    register_screen_hotkey(buffer, llm_client)
+    app = QApplication(sys.argv)
+    signals = Signals()
+
+    def on_toggle_listen():
+        actions.toggle_listening(listening_event, buffer, signals)
+
+    def on_explain():
+        threading.Thread(
+            target=actions.explain_transcript, args=(buffer, llm_client, signals), daemon=True
+        ).start()
+
+    def on_explain_screen():
+        threading.Thread(
+            target=actions.explain_screen, args=(buffer, llm_client, signals), daemon=True
+        ).start()
+
+    window = OverlayWindow(signals, on_toggle_listen, on_explain, on_explain_screen)
+    window.closing.connect(stop_event.set)
+    window.show()
+
+    register_hotkeys(buffer, llm_client, listening_event, signals)
 
     rec_thread = threading.Thread(
         target=recorder_thread,
         args=(device, rate, channels, raw_queue, stop_event, listening_event),
+        daemon=True,
     )
     seg_thread = threading.Thread(
-        target=segmenter_thread, args=(rate, channels, raw_queue, speech_queue, stop_event)
+        target=segmenter_thread,
+        args=(rate, channels, raw_queue, speech_queue, stop_event),
+        daemon=True,
     )
     trans_thread = threading.Thread(
-        target=transcriber_thread, args=(model, speech_queue, stop_event, buffer)
+        target=transcriber_thread,
+        args=(model, speech_queue, stop_event, buffer, signals),
+        daemon=True,
     )
 
     rec_thread.start()
     seg_thread.start()
     trans_thread.start()
 
-    status = "включено" if listening_event.is_set() else "выключено"
-    print(
-        f"Готово. Прослушивание сейчас: {status}.\n"
-        f"  {config.LISTEN_TOGGLE_HOTKEY} — вкл/выкл прослушивание\n"
-        f"  {config.EXPLAIN_HOTKEY} — объяснить последние минуты\n"
-        f"  {config.SCREEN_HOTKEY} — выделить область экрана и объяснить\n"
-        f"  Ctrl+C — выйти"
-    )
-
-    try:
-        while rec_thread.is_alive():
-            time.sleep(0.2)
-    except KeyboardInterrupt:
-        print("\nОстанавливаю...")
-        stop_event.set()
-
-    rec_thread.join(timeout=3)
-    seg_thread.join(timeout=3)
-    trans_thread.join(timeout=3)
-    print("Остановлено.")
+    sys.exit(app.exec())
 
 
 if __name__ == "__main__":

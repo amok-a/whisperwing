@@ -17,6 +17,7 @@ def transcriber_thread(
     speech_queue: queue.Queue,
     stop_event: threading.Event,
     buffer: ConversationBuffer,
+    signals,
 ):
     while not stop_event.is_set():
         try:
@@ -38,6 +39,7 @@ def transcriber_thread(
             if text:
                 print(f">> {text}")
                 buffer.append(text)
+                signals.transcript_line.emit(text)
         except Exception:
             print("Ошибка в обработке сегмента речи:")
             traceback.print_exc()
