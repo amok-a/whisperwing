@@ -1,37 +1,46 @@
-import webrtcvad
 import audioop
 import queue
 import threading
 import time
 
+import numpy as np
+import torch
+from silero_vad import load_silero_vad, VADIterator
+
 from . import config
 
-FRAME_MS = 30
-BYTES_PER_SAMPLE = 2  # 16-bit PCM
-FRAME_BYTES_16K_MONO = int(config.TARGET_SAMPLE_RATE * FRAME_MS / 1000) * BYTES_PER_SAMPLE
+WINDOW_SAMPLES = 512
+BYTES_PER_SAMPLE = 2
+WINDOW_BYTES = WINDOW_SAMPLES * BYTES_PER_SAMPLE
 
 
 class VadSegmenter:
-
     def __init__(self, orig_rate: int, channels: int):
         self._orig_rate = orig_rate
         self._channels = channels
-        self._vad = webrtcvad.Vad(config.VAD_AGGRESSIVENESS)
+
+        self._model = load_silero_vad()
+        self._vad_iterator = VADIterator(
+            self._model,
+            sampling_rate=config.TARGET_SAMPLE_RATE,
+            threshold=config.VAD_THRESHOLD,
+            min_silence_duration_ms=config.VAD_SILENCE_MS,
+            speech_pad_ms=config.VAD_SPEECH_PAD_MS,
+        )
 
         self._resample_state = None
         self._pending_bytes = b""
         self._segment_buffer = bytearray()
         self._is_speaking = False
-        self._silence_start = None
 
     def process_raw_chunk(self, raw_bytes: bytes, out_queue: queue.Queue):
         mono_16k = self._to_16k_mono(raw_bytes)
         self._pending_bytes += mono_16k
 
-        while len(self._pending_bytes) >= FRAME_BYTES_16K_MONO:
-            frame = self._pending_bytes[:FRAME_BYTES_16K_MONO]
-            self._pending_bytes = self._pending_bytes[FRAME_BYTES_16K_MONO:]
-            self._process_frame(frame, out_queue)
+        while len(self._pending_bytes) >= WINDOW_BYTES:
+            frame_bytes = self._pending_bytes[:WINDOW_BYTES]
+            self._pending_bytes = self._pending_bytes[WINDOW_BYTES:]
+            self._process_frame(frame_bytes, out_queue)
 
     def _to_16k_mono(self, raw_bytes: bytes) -> bytes:
         if self._channels > 1:
@@ -41,27 +50,26 @@ class VadSegmenter:
         )
         return resampled
 
-    def _process_frame(self, frame: bytes, out_queue: queue.Queue):
-        is_speech = self._vad.is_speech(frame, config.TARGET_SAMPLE_RATE)
-        now = time.time()
+    def _process_frame(self, frame_bytes: bytes, out_queue: queue.Queue):
+        if self._is_speaking:
+            self._segment_buffer.extend(frame_bytes)
 
-        if is_speech:
-            if not self._is_speaking:
+        audio_np = np.frombuffer(frame_bytes, dtype=np.int16).astype(np.float32) / 32768.0
+        audio_tensor = torch.from_numpy(audio_np)
+        event = self._vad_iterator(audio_tensor, return_seconds=False)
+
+        if event is not None:
+            if "start" in event and not self._is_speaking:
                 self._is_speaking = True
-                self._segment_buffer = bytearray()
-            self._segment_buffer.extend(frame)
-            self._silence_start = None
+                self._segment_buffer = bytearray(frame_bytes)
+            elif "end" in event and self._is_speaking:
+                self._flush(out_queue)
+                return
 
+        if self._is_speaking:
             duration = len(self._segment_buffer) / BYTES_PER_SAMPLE / config.TARGET_SAMPLE_RATE
             if duration >= config.VAD_MAX_SEGMENT_SECONDS:
                 self._flush(out_queue)
-        else:
-            if self._is_speaking:
-                self._segment_buffer.extend(frame)
-                if self._silence_start is None:
-                    self._silence_start = now
-                elif now - self._silence_start >= config.VAD_SILENCE_MS / 1000:
-                    self._flush(out_queue)
 
     def _flush(self, out_queue: queue.Queue):
         duration = len(self._segment_buffer) / BYTES_PER_SAMPLE / config.TARGET_SAMPLE_RATE
@@ -69,7 +77,6 @@ class VadSegmenter:
             out_queue.put(bytes(self._segment_buffer))
         self._segment_buffer = bytearray()
         self._is_speaking = False
-        self._silence_start = None
 
 
 def segmenter_thread(orig_rate, channels, raw_queue: queue.Queue, speech_queue: queue.Queue, stop_event: threading.Event):
