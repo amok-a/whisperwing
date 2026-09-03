@@ -128,10 +128,10 @@ class OverlayWindow(QWidget):
         scrollbar.setValue(scrollbar.maximum())
 
     def _on_explanation(self, text):
-        self.answer_view.setPlainText(text)
+        self.answer_view.setMarkdown(f"**[Скриншот]**\n\n{text}")
 
     def _on_screen_explanation(self, text):
-        self.answer_view.setPlainText(f"[Скриншот]\n{text}")
+        self.answer_view.setMarkdown(f"**[Скриншот]**\n\n{text}")
 
     def _on_status_changed(self, text):
         self.status_label.setText(f"Статус: {text}")
