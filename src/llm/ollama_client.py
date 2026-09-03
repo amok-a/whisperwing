@@ -5,17 +5,21 @@ from .. import config
 from .base import LLMClient, EXPLAIN_SYSTEM_PROMPT, IMAGE_EXPLAIN_SYSTEM_PROMPT
 
 IMAGE_DESCRIBE_PROMPT = (
-    "Describe what is shown in this image in detail: text content, "
-    "diagrams, charts, UI elements, any technical or domain-specific "
-    "details. Be factual and thorough, do not add commentary."
+    "Transcribe all text and code visible in this image as precisely "
+    "as possible, verbatim where you can. Describe any diagrams, charts "
+    "or UI elements. Be factual and thorough, do not add commentary or "
+    "solve anything yourself."
 )
 
 IMAGE_TRANSLATE_SYSTEM_PROMPT = (
-    "Тебе дано подробное описание скриншота (на английском) и, возможно, "
-    "контекст разговора. Кратко и просто перескажи по-русски, что на "
-    "скриншоте и почему это может быть важно в контексте разговора, "
-    "если контекст есть. 3-5 предложений, без вступлений, без упоминания "
-    "того, что ты переводишь чьё-то описание."
+    "Тебе дано подробное описание/расшифровка скриншота (на английском) "
+    "и, возможно, контекст разговора. Если в описании — вопрос, задача "
+    "или проблема (например, задача по программированию) — реши её по "
+    "существу и дай конкретный ответ или решение (с кодом, если уместно). "
+    "Если это просто иллюстрация без явного вопроса — кратко объясни, что "
+    "на ней и почему это может быть важно в контексте разговора, если "
+    "контекст есть. Отвечай по-русски, без вступлений, без упоминания "
+    "того, что тебе передали чьё-то описание."
 )
 
 
