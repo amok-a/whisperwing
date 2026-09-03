@@ -16,7 +16,7 @@ WHISPER_INITIAL_PROMPT = (
 TARGET_SAMPLE_RATE = 16000
 
 VAD_THRESHOLD = 0.5        # порог уверенности модели, что это речь (0-1)
-VAD_SPEECH_PAD_MS = 30      # небольшой запас звука до/после речи, чтобы не резать края слов
+VAD_SPEECH_PAD_MS = 35      # небольшой запас звука до/после речи, чтобы не резать края слов
 VAD_SILENCE_MS = 600
 VAD_MIN_SEGMENT_SECONDS = 0.5
 VAD_MAX_SEGMENT_SECONDS = 20
