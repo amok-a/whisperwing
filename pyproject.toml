@@ -40,3 +40,11 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.scripts]
 whisperwing = "src.main:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.1.1,<10.0.0)"
+]
