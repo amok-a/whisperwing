@@ -32,11 +32,10 @@ def test_downsample_mono_produces_expected_length():
     assert abs(actual_samples - expected_samples) < 50
 
 
-def test_downsample_stereo_produces_expected_length():
+def test_downsample_stereo_input_is_converted_to_mono():
     audio = _sine_wave_pcm16(1.0, 48000, channels=2)
     result = resample_audio_bytes(audio, orig_rate=48000, channels=2, target_rate=16000)
-
-    expected_samples = 16000 * 2  # 2 канала
+    expected_samples = 16000
     actual_samples = len(result) // 2
 
     assert abs(actual_samples - expected_samples) < 100
