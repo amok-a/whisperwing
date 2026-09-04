@@ -1,7 +1,7 @@
 import math
 import struct
 
-from src.audio_capture import resample_audio_bytes
+from src.audio_utils import resample_audio_bytes
 
 
 def _sine_wave_pcm16(duration_seconds: float, sample_rate: int, channels: int = 1) -> bytes:
