@@ -1,3 +1,4 @@
+import logging
 import sys
 import queue
 import threading
@@ -7,6 +8,7 @@ from PyQt6.QtWidgets import QApplication
 
 from . import config
 from . import actions
+from .logging_config import setup_logging
 from .audio_capture import find_loopback_device, recorder_thread
 from .vad_segmenter import segmenter_thread
 from .transcriber import load_whisper_model, transcriber_thread
@@ -16,12 +18,16 @@ from .signals import Signals
 from .overlay import OverlayWindow
 from .hotkeys import register_hotkeys
 
+logger = logging.getLogger(__name__)
+
 
 def main():
+    setup_logging()
+
     try:
         llm_client = get_llm_client()
     except Exception as e:
-        print(f"Не удалось инициализировать LLM-клиента: {e}")
+        logger.error(f"Не удалось инициализировать LLM-клиента: {e}")
         return
 
     p = pyaudio.PyAudio()
@@ -30,11 +36,11 @@ def main():
     channels = int(device["maxInputChannels"])
     p.terminate()
 
-    print(f"Устройство: {device['name']}, rate={rate}, channels={channels}")
-    print(f"LLM-провайдер: {config.LLM_PROVIDER}")
-    print("Загружаю модель Whisper...")
+    logger.info(f"Устройство: {device['name']}, rate={rate}, channels={channels}")
+    logger.info(f"LLM-провайдер: {config.LLM_PROVIDER}")
+    logger.info("Загружаю модель Whisper...")
     model = load_whisper_model()
-    print("Модель загружена.")
+    logger.info("Модель загружена.")
 
     raw_queue = queue.Queue()
     speech_queue = queue.Queue()
