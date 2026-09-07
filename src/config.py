@@ -1,49 +1,89 @@
-import os
-from dotenv import load_dotenv
+from typing import Literal, Optional
 
-load_dotenv()
+from pydantic import Field, model_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Whisper
-WHISPER_MODEL_SIZE = "base"
-WHISPER_LANGUAGE = "ru"
-WHISPER_INITIAL_PROMPT = (
-    "Технический созвон разработчиков. Встречаются термины: "
-    "HTTP, HTTPS, API, JSON, SQL, REST, backend, frontend, database, "
-    "Python, Docker, Kubernetes, инкапсуляция, полиморфизм, наследование."
-)
 
-# Аудио
-TARGET_SAMPLE_RATE = 16000
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-VAD_THRESHOLD = 0.5        # порог уверенности модели, что это речь (0-1)
-VAD_SPEECH_PAD_MS = 35      # небольшой запас звука до/после речи, чтобы не резать края слов
-VAD_SILENCE_MS = 600
-VAD_MIN_SEGMENT_SECONDS = 0.5
-VAD_MAX_SEGMENT_SECONDS = 20
+    # Whisper
+    WHISPER_MODEL_SIZE: str = "base"
+    WHISPER_LANGUAGE: str = "ru"
+    WHISPER_INITIAL_PROMPT: str = (
+        "Технический созвон разработчиков. Встречаются термины: "
+        "HTTP, HTTPS, API, JSON, SQL, REST, backend, frontend, database, "
+        "Python, Docker, Kubernetes, инкапсуляция, полиморфизм, наследование."
+    )
 
-# Буфер разговора
-BUFFER_MINUTES = 5
+    # Аудио
+    TARGET_SAMPLE_RATE: int = 16000
 
-# Хоткей
-EXPLAIN_HOTKEY = "ctrl+shift+e"
+    # VAD (Silero)
+    VAD_THRESHOLD: float = Field(default=0.5, ge=0.0, le=1.0)
+    VAD_SPEECH_PAD_MS: int = Field(default=30, ge=0)
+    VAD_SILENCE_MS: int = Field(default=600, ge=0)
+    VAD_MIN_SEGMENT_SECONDS: float = Field(default=0.5, ge=0.0)
+    VAD_MAX_SEGMENT_SECONDS: float = Field(default=20.0, gt=0.0)
 
-# LLM-провайдер: "ollama" или "anthropic"
-LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "ollama")
+    # Буфер разговора
+    BUFFER_MINUTES: int = Field(default=5, gt=0)
 
-# Anthropic
-ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY")
-ANTHROPIC_MODEL = "claude-sonnet-5"
+    # Хоткеи
+    EXPLAIN_HOTKEY: str = "ctrl+shift+e"
+    LISTEN_TOGGLE_HOTKEY: str = "ctrl+shift+l"
+    SCREEN_HOTKEY: str = "ctrl+shift+s"
+    LISTEN_ON_START: bool = False
 
-# Ollama
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL", "qwen2.5:7b")
+    # LLM-провайдер
+    LLM_PROVIDER: Literal["ollama", "anthropic"] = "ollama"
 
-# Старт/стоп прослушивания
-LISTEN_TOGGLE_HOTKEY = "ctrl+shift+l"
-LISTEN_ON_START = False  # запускать ли прослушивание сразу при старте скрипта
+    # Anthropic
+    ANTHROPIC_API_KEY: Optional[str] = None
+    ANTHROPIC_MODEL: str = "claude-sonnet-5"
 
-# Захват экрана
-SCREEN_HOTKEY = "ctrl+shift+s"
+    # Ollama
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
+    OLLAMA_MODEL: str = "qwen2.5:7b"
+    OLLAMA_VISION_MODEL: str = "llava:7b"
 
-# Ollama vision-модель (отдельно от текстовой)
-OLLAMA_VISION_MODEL = os.environ.get("OLLAMA_VISION_MODEL", "llava:7b")
+    @model_validator(mode="after")
+    def check_anthropic_key_present(self) -> "Settings":
+        if self.LLM_PROVIDER == "anthropic" and not self.ANTHROPIC_API_KEY:
+            raise ValueError(
+                "LLM_PROVIDER=anthropic требует заполненный ANTHROPIC_API_KEY в .env"
+            )
+        return self
+
+
+settings = Settings()
+
+# Плоские модульные переменные для обратной совместимости — остальной код
+# обращается к ним как config.WHISPER_MODEL_SIZE и т.д., менять его не нужно.
+WHISPER_MODEL_SIZE = settings.WHISPER_MODEL_SIZE
+WHISPER_LANGUAGE = settings.WHISPER_LANGUAGE
+WHISPER_INITIAL_PROMPT = settings.WHISPER_INITIAL_PROMPT
+
+TARGET_SAMPLE_RATE = settings.TARGET_SAMPLE_RATE
+
+VAD_THRESHOLD = settings.VAD_THRESHOLD
+VAD_SPEECH_PAD_MS = settings.VAD_SPEECH_PAD_MS
+VAD_SILENCE_MS = settings.VAD_SILENCE_MS
+VAD_MIN_SEGMENT_SECONDS = settings.VAD_MIN_SEGMENT_SECONDS
+VAD_MAX_SEGMENT_SECONDS = settings.VAD_MAX_SEGMENT_SECONDS
+
+BUFFER_MINUTES = settings.BUFFER_MINUTES
+
+EXPLAIN_HOTKEY = settings.EXPLAIN_HOTKEY
+LISTEN_TOGGLE_HOTKEY = settings.LISTEN_TOGGLE_HOTKEY
+SCREEN_HOTKEY = settings.SCREEN_HOTKEY
+LISTEN_ON_START = settings.LISTEN_ON_START
+
+LLM_PROVIDER = settings.LLM_PROVIDER
+
+ANTHROPIC_API_KEY = settings.ANTHROPIC_API_KEY
+ANTHROPIC_MODEL = settings.ANTHROPIC_MODEL
+
+OLLAMA_BASE_URL = settings.OLLAMA_BASE_URL
+OLLAMA_MODEL = settings.OLLAMA_MODEL
+OLLAMA_VISION_MODEL = settings.OLLAMA_VISION_MODEL
