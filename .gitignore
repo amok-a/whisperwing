@@ -13,6 +13,7 @@ dist/
 *.swp
 .DS_Store
 Thumbs.db
+logs/
 
 # Poetry / venv
 .venv/

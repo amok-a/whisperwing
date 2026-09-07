@@ -1,11 +1,13 @@
+import logging
 import numpy as np
 import queue
 import threading
-import traceback
 from faster_whisper import WhisperModel
 
 from . import config
 from .conversation_buffer import ConversationBuffer
+
+logger = logging.getLogger(__name__)
 
 
 def load_whisper_model():
@@ -37,9 +39,8 @@ def transcriber_thread(
             text = " ".join(seg.text for seg in segments).strip()
 
             if text:
-                print(f">> {text}")
+                logger.info(f">> {text}")
                 buffer.append(text)
                 signals.transcript_line.emit(text)
         except Exception:
-            print("Ошибка в обработке сегмента речи:")
-            traceback.print_exc()
+            logger.exception("Ошибка в обработке сегмента речи")
