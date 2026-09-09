@@ -1,8 +1,8 @@
 import threading
+
 import keyboard
 
-from . import config
-from . import actions
+from . import actions, config
 
 
 def register_hotkeys(buffer, llm_client, listening_event, signals):

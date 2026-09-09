@@ -1,11 +1,10 @@
 import audioop
 import queue
 import threading
-import time
 
 import numpy as np
 import torch
-from silero_vad import load_silero_vad, VADIterator
+from silero_vad import VADIterator, load_silero_vad
 
 from . import config
 

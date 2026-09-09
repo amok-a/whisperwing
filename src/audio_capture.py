@@ -1,7 +1,8 @@
-import pyaudiowpatch as pyaudio
+import queue
 import threading
 import time
-import queue
+
+import pyaudiowpatch as pyaudio
 
 
 def find_loopback_device(p):

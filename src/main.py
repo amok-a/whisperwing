@@ -1,22 +1,21 @@
 import logging
-import sys
 import queue
+import sys
 import threading
 
 import pyaudiowpatch as pyaudio
 from PyQt6.QtWidgets import QApplication
 
-from . import config
-from . import actions
-from .logging_config import setup_logging
+from . import actions, config
 from .audio_capture import find_loopback_device, recorder_thread
-from .vad_segmenter import segmenter_thread
-from .transcriber import load_whisper_model, transcriber_thread
 from .conversation_buffer import ConversationBuffer
-from .llm.factory import get_llm_client
-from .signals import Signals
-from .overlay import OverlayWindow
 from .hotkeys import register_hotkeys
+from .llm.factory import get_llm_client
+from .logging_config import setup_logging
+from .overlay import OverlayWindow
+from .signals import Signals
+from .transcriber import load_whisper_model, transcriber_thread
+from .vad_segmenter import segmenter_thread
 
 logger = logging.getLogger(__name__)
 

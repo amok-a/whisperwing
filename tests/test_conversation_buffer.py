@@ -1,5 +1,5 @@
-from src.conversation_buffer import ConversationBuffer
 import src.conversation_buffer as buffer_module
+from src.conversation_buffer import ConversationBuffer
 
 
 def _freeze_time(monkeypatch, start=1000.0):

@@ -1,7 +1,8 @@
 import logging
-import numpy as np
 import queue
 import threading
+
+import numpy as np
 from faster_whisper import WhisperModel
 
 from . import config

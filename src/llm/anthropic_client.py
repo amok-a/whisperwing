@@ -1,8 +1,9 @@
 import base64
+
 from anthropic import Anthropic
 
 from .. import config
-from .base import LLMClient, EXPLAIN_SYSTEM_PROMPT, IMAGE_EXPLAIN_SYSTEM_PROMPT
+from .base import EXPLAIN_SYSTEM_PROMPT, IMAGE_EXPLAIN_SYSTEM_PROMPT, LLMClient
 
 
 class AnthropicLLMClient(LLMClient):

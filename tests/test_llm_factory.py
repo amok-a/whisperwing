@@ -1,9 +1,9 @@
 import pytest
 
 from src import config
+from src.llm.anthropic_client import AnthropicLLMClient
 from src.llm.factory import get_llm_client
 from src.llm.ollama_client import OllamaLLMClient
-from src.llm.anthropic_client import AnthropicLLMClient
 
 
 def test_ollama_provider_returns_ollama_client(monkeypatch):

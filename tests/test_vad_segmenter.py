@@ -1,7 +1,7 @@
 import queue
 
 import src.vad_segmenter as vad_module
-from src.vad_segmenter import VadSegmenter, WINDOW_BYTES
+from src.vad_segmenter import WINDOW_BYTES, VadSegmenter
 
 
 class DummyVADIterator:

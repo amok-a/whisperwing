@@ -1,5 +1,6 @@
-import tkinter as tk
 import io
+import tkinter as tk
+
 import mss
 from PIL import Image
 

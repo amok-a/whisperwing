@@ -1,8 +1,9 @@
 import base64
+
 import requests
 
 from .. import config
-from .base import LLMClient, EXPLAIN_SYSTEM_PROMPT, IMAGE_EXPLAIN_SYSTEM_PROMPT
+from .base import EXPLAIN_SYSTEM_PROMPT, LLMClient
 
 IMAGE_DESCRIBE_PROMPT = (
     "Transcribe all text and code visible in this image as precisely "

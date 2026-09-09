@@ -1,6 +1,6 @@
 import logging
 
-from .screen_capture import select_region, capture_region
+from .screen_capture import capture_region, select_region
 
 logger = logging.getLogger(__name__)
 
