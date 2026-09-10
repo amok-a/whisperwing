@@ -1,8 +1,8 @@
 import io
+import tkinter as tk
 from typing import Optional
 
 import mss
-import tkinter as tk
 from PIL import Image
 
 Region = tuple[int, int, int, int]
