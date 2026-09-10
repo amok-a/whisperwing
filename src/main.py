@@ -20,7 +20,7 @@ from .vad_segmenter import segmenter_thread
 logger = logging.getLogger(__name__)
 
 
-def main():
+def main() -> None:
     setup_logging()
 
     try:

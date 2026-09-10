@@ -7,21 +7,22 @@ from faster_whisper import WhisperModel
 
 from . import config
 from .conversation_buffer import ConversationBuffer
+from .signals import Signals
 
 logger = logging.getLogger(__name__)
 
 
-def load_whisper_model():
+def load_whisper_model() -> WhisperModel:
     return WhisperModel(config.WHISPER_MODEL_SIZE, device="cpu", compute_type="int8")
 
 
 def transcriber_thread(
-    model,
+    model: WhisperModel,
     speech_queue: queue.Queue,
     stop_event: threading.Event,
     buffer: ConversationBuffer,
-    signals,
-):
+    signals: Signals,
+) -> None:
     while not stop_event.is_set():
         try:
             audio_bytes = speech_queue.get(timeout=0.5)

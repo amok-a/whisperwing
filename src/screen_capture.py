@@ -1,11 +1,14 @@
 import io
-import tkinter as tk
+from typing import Optional
 
 import mss
+import tkinter as tk
 from PIL import Image
 
+Region = tuple[int, int, int, int]
 
-def select_region():
+
+def select_region() -> Optional[Region]:
     result = {}
 
     root = tk.Tk()
@@ -48,7 +51,7 @@ def select_region():
     return result.get("region")
 
 
-def capture_region(region) -> bytes:
+def capture_region(region: Region) -> bytes:
     x1, y1, x2, y2 = region
     with mss.mss() as sct:
         monitor = {"left": x1, "top": y1, "width": x2 - x1, "height": y2 - y1}

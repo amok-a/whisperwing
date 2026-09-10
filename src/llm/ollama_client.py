@@ -27,12 +27,19 @@ IMAGE_TRANSLATE_SYSTEM_PROMPT = (
 
 
 class OllamaLLMClient(LLMClient):
-    def __init__(self):
+    def __init__(self) -> None:
         self._base_url = config.OLLAMA_BASE_URL
         self._model = config.OLLAMA_MODEL
         self._vision_model = config.OLLAMA_VISION_MODEL
 
-    def _chat(self, model: str, system: str, user_content, timeout=60) -> str:
+    def _chat(
+        self,
+        model: str,
+        system: str,
+        user_content: dict,
+        timeout: int = 60,
+        num_predict: int = 300,
+    ) -> str:
         response = requests.post(
             f"{self._base_url}/api/chat",
             json={

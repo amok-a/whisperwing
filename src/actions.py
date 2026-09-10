@@ -1,11 +1,17 @@
 import logging
+import threading
 
+from .conversation_buffer import ConversationBuffer
+from .llm.base import LLMClient
 from .screen_capture import capture_region, select_region
+from .signals import Signals
 
 logger = logging.getLogger(__name__)
 
 
-def toggle_listening(listening_event, buffer, signals):
+def toggle_listening(
+    listening_event: threading.Event, buffer: ConversationBuffer, signals: Signals
+) -> None:
     if listening_event.is_set():
         listening_event.clear()
         msg = "Прослушивание остановлено"
@@ -17,7 +23,7 @@ def toggle_listening(listening_event, buffer, signals):
     signals.status_changed.emit(msg)
 
 
-def explain_transcript(buffer, llm_client, signals):
+def explain_transcript(buffer: ConversationBuffer, llm_client: LLMClient, signals: Signals) -> None:
     transcript = buffer.get_text()
     if not transcript:
         signals.explanation_ready.emit("Буфер пуст — пока нечего объяснять.")
@@ -33,7 +39,7 @@ def explain_transcript(buffer, llm_client, signals):
         signals.explanation_ready.emit("Ошибка при запросе к LLM (см. логи).")
 
 
-def explain_screen(buffer, llm_client, signals):
+def explain_screen(buffer: ConversationBuffer, llm_client: LLMClient, signals: Signals) -> None:
     try:
         logger.debug("Открываю окно выделения области")
         signals.status_changed.emit("Выдели область экрана мышью, Esc — отмена")

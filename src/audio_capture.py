@@ -5,7 +5,7 @@ import time
 import pyaudiowpatch as pyaudio
 
 
-def find_loopback_device(p):
+def find_loopback_device(p: pyaudio.PyAudio) -> dict:
     wasapi_info = p.get_host_api_info_by_type(pyaudio.paWASAPI)
     default_speakers = p.get_device_info_by_index(wasapi_info["defaultOutputDevice"])
     if not default_speakers["isLoopbackDevice"]:
@@ -17,13 +17,13 @@ def find_loopback_device(p):
 
 
 def recorder_thread(
-    device,
-    rate,
-    channels,
+    device: dict,
+    rate: int,
+    channels: int,
     raw_queue: queue.Queue,
     stop_event: threading.Event,
     listening_event: threading.Event,
-):
+) -> None:
     p = pyaudio.PyAudio()
 
     def callback(in_data, frame_count, time_info, status):

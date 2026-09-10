@@ -14,7 +14,7 @@ WINDOW_BYTES = WINDOW_SAMPLES * BYTES_PER_SAMPLE
 
 
 class VadSegmenter:
-    def __init__(self, orig_rate: int, channels: int):
+    def __init__(self, orig_rate: int, channels: int) -> None:
         self._orig_rate = orig_rate
         self._channels = channels
 
@@ -32,7 +32,7 @@ class VadSegmenter:
         self._segment_buffer = bytearray()
         self._is_speaking = False
 
-    def process_raw_chunk(self, raw_bytes: bytes, out_queue: queue.Queue):
+    def process_raw_chunk(self, raw_bytes: bytes, out_queue: queue.Queue) -> None:
         mono_16k = self._to_16k_mono(raw_bytes)
         self._pending_bytes += mono_16k
 
@@ -49,7 +49,7 @@ class VadSegmenter:
         )
         return resampled
 
-    def _process_frame(self, frame_bytes: bytes, out_queue: queue.Queue):
+    def _process_frame(self, frame_bytes: bytes, out_queue: queue.Queue) -> None:
         if self._is_speaking:
             self._segment_buffer.extend(frame_bytes)
 
@@ -70,7 +70,7 @@ class VadSegmenter:
             if duration >= config.VAD_MAX_SEGMENT_SECONDS:
                 self._flush(out_queue)
 
-    def _flush(self, out_queue: queue.Queue):
+    def _flush(self, out_queue: queue.Queue) -> None:
         duration = len(self._segment_buffer) / BYTES_PER_SAMPLE / config.TARGET_SAMPLE_RATE
         if duration >= config.VAD_MIN_SEGMENT_SECONDS:
             out_queue.put(bytes(self._segment_buffer))
@@ -78,7 +78,13 @@ class VadSegmenter:
         self._is_speaking = False
 
 
-def segmenter_thread(orig_rate, channels, raw_queue: queue.Queue, speech_queue: queue.Queue, stop_event: threading.Event):
+def segmenter_thread(
+    orig_rate: int,
+    channels: int,
+    raw_queue: queue.Queue,
+    speech_queue: queue.Queue,
+    stop_event: threading.Event,
+) -> None:
     segmenter = VadSegmenter(orig_rate, channels)
 
     while not stop_event.is_set():

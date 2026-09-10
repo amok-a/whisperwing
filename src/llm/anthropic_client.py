@@ -7,7 +7,7 @@ from .base import EXPLAIN_SYSTEM_PROMPT, IMAGE_EXPLAIN_SYSTEM_PROMPT, LLMClient
 
 
 class AnthropicLLMClient(LLMClient):
-    def __init__(self):
+    def __init__(self) -> None:
         if not config.ANTHROPIC_API_KEY:
             raise RuntimeError("ANTHROPIC_API_KEY не найден. Проверь .env")
         self._client = Anthropic(api_key=config.ANTHROPIC_API_KEY)
