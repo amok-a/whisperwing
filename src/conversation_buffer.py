@@ -1,5 +1,6 @@
 import threading
 import time
+from collections import deque
 
 from . import config
 
@@ -7,7 +8,7 @@ from . import config
 class ConversationBuffer:
     def __init__(self, minutes: int = config.BUFFER_MINUTES) -> None:
         self._minutes = minutes
-        self._items: list[tuple[float, str]] = []
+        self._items: deque[tuple[float, str]] = deque()
         self._lock = threading.Lock()
 
     def append(self, text: str) -> None:
@@ -16,7 +17,7 @@ class ConversationBuffer:
             self._items.append((now, text))
             cutoff = now - self._minutes * 60
             while self._items and self._items[0][0] < cutoff:
-                self._items.pop(0)
+                self._items.popleft()
 
     def get_text(self) -> str:
         with self._lock:
