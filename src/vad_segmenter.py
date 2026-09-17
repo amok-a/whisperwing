@@ -1,8 +1,8 @@
-import audioop
 import queue
 import threading
 
 import numpy as np
+import soxr
 import torch
 from silero_vad import VADIterator, load_silero_vad
 
@@ -14,6 +14,9 @@ WINDOW_BYTES = WINDOW_SAMPLES * BYTES_PER_SAMPLE
 
 
 class VadSegmenter:
+    """Слушает сырой аудиопоток, определяет границы фраз через Silero VAD
+    (нейросеть) и кладёт в очередь уже нарезанные по смыслу куски речи."""
+
     def __init__(self, orig_rate: int, channels: int) -> None:
         self._orig_rate = orig_rate
         self._channels = channels
@@ -27,7 +30,13 @@ class VadSegmenter:
             speech_pad_ms=config.VAD_SPEECH_PAD_MS,
         )
 
-        self._resample_state = None
+        # Потоковый ресемплер — хранит внутреннее состояние фильтра между
+        # вызовами, чтобы не было щелчков на границах последовательных чанков
+        # (аналог state у старого audioop.ratecv).
+        self._resampler = soxr.ResampleStream(
+            orig_rate, config.TARGET_SAMPLE_RATE, 1, dtype="float32"
+        )
+
         self._pending_bytes = b""
         self._segment_buffer = bytearray()
         self._is_speaking = False
@@ -42,12 +51,14 @@ class VadSegmenter:
             self._process_frame(frame_bytes, out_queue)
 
     def _to_16k_mono(self, raw_bytes: bytes) -> bytes:
+        audio_np = np.frombuffer(raw_bytes, dtype=np.int16)
         if self._channels > 1:
-            raw_bytes = audioop.tomono(raw_bytes, 2, 0.5, 0.5)
-        resampled, self._resample_state = audioop.ratecv(
-            raw_bytes, 2, 1, self._orig_rate, config.TARGET_SAMPLE_RATE, self._resample_state
-        )
-        return resampled
+            audio_np = audio_np.reshape(-1, self._channels).mean(axis=1)
+
+        audio_float = audio_np.astype(np.float32) / 32768.0
+        resampled = self._resampler.resample_chunk(audio_float)
+        resampled_int16 = np.clip(resampled * 32768.0, -32768, 32767).astype(np.int16)
+        return resampled_int16.tobytes()
 
     def _process_frame(self, frame_bytes: bytes, out_queue: queue.Queue) -> None:
         if self._is_speaking:
