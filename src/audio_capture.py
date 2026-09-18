@@ -4,6 +4,8 @@ import time
 
 import pyaudiowpatch as pyaudio
 
+from .bounded_queue import DropOldestQueue
+
 
 def find_loopback_device(p: pyaudio.PyAudio) -> dict:
     wasapi_info = p.get_host_api_info_by_type(pyaudio.paWASAPI)
@@ -20,7 +22,7 @@ def recorder_thread(
     device: dict,
     rate: int,
     channels: int,
-    raw_queue: queue.Queue,
+    raw_queue: DropOldestQueue,
     stop_event: threading.Event,
     listening_event: threading.Event,
 ) -> None:
@@ -28,7 +30,7 @@ def recorder_thread(
 
     def callback(in_data, frame_count, time_info, status):
         if listening_event.is_set():
-            raw_queue.put(in_data)
+            raw_queue.put_drop_oldest(in_data)
         return (in_data, pyaudio.paContinue)
 
     stream = p.open(
