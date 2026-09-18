@@ -5,6 +5,7 @@ import threading
 
 import pyaudiowpatch as pyaudio
 from PyQt6.QtWidgets import QApplication
+from .bounded_queue import DropOldestQueue
 
 from . import actions, config
 from .audio_capture import find_loopback_device, recorder_thread
@@ -41,8 +42,8 @@ def main() -> None:
     model = load_whisper_model()
     logger.info("Модель загружена.")
 
-    raw_queue = queue.Queue()
-    speech_queue = queue.Queue()
+    raw_queue = DropOldestQueue(maxsize=config.RAW_QUEUE_MAXSIZE, name="raw_queue")
+    speech_queue = DropOldestQueue(maxsize=config.SPEECH_QUEUE_MAXSIZE, name="speech_queue")
     stop_event = threading.Event()
     listening_event = threading.Event()
     if config.LISTEN_ON_START:

@@ -4,6 +4,7 @@ import threading
 
 import numpy as np
 from faster_whisper import WhisperModel
+from .bounded_queue import DropOldestQueue
 
 from . import config
 from .conversation_buffer import ConversationBuffer
@@ -18,7 +19,7 @@ def load_whisper_model() -> WhisperModel:
 
 def transcriber_thread(
     model: WhisperModel,
-    speech_queue: queue.Queue,
+    speech_queue: DropOldestQueue,
     stop_event: threading.Event,
     buffer: ConversationBuffer,
     signals: Signals,

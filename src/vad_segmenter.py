@@ -7,6 +7,7 @@ import torch
 from silero_vad import VADIterator, load_silero_vad
 
 from . import config
+from .bounded_queue import DropOldestQueue
 
 WINDOW_SAMPLES = 512
 BYTES_PER_SAMPLE = 2
@@ -73,18 +74,18 @@ class VadSegmenter:
                 self._is_speaking = True
                 self._segment_buffer = bytearray(frame_bytes)
             elif "end" in event and self._is_speaking:
-                self._flush(out_queue)
+                self._flush(out_queue: DropOldestQueue)
                 return
 
         if self._is_speaking:
             duration = len(self._segment_buffer) / BYTES_PER_SAMPLE / config.TARGET_SAMPLE_RATE
             if duration >= config.VAD_MAX_SEGMENT_SECONDS:
-                self._flush(out_queue)
+                self._flush(out_queue: DropOldestQueue)
 
-    def _flush(self, out_queue: queue.Queue) -> None:
+    def _flush(self, out_queue: DropOldestQueue) -> None:
         duration = len(self._segment_buffer) / BYTES_PER_SAMPLE / config.TARGET_SAMPLE_RATE
         if duration >= config.VAD_MIN_SEGMENT_SECONDS:
-            out_queue.put(bytes(self._segment_buffer))
+            out_queue.put_drop_oldest(bytes(self._segment_buffer))
         self._segment_buffer = bytearray()
         self._is_speaking = False
 
