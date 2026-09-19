@@ -20,17 +20,9 @@ def register_hotkeys(
     )
     keyboard.add_hotkey(
         config.EXPLAIN_HOTKEY,
-        lambda: threading.Thread(
-            target=actions.explain_transcript,
-            args=(buffer, llm_client, signals),
-            daemon=True,
-        ).start(),
+        lambda: actions.explain_transcript_async(buffer, llm_client, signals),
     )
     keyboard.add_hotkey(
         config.SCREEN_HOTKEY,
-        lambda: threading.Thread(
-            target=actions.explain_screen,
-            args=(buffer, llm_client, signals),
-            daemon=True,
-        ).start(),
+        lambda: actions.explain_screen_async(buffer, llm_client, signals),
     )

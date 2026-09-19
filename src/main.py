@@ -1,22 +1,15 @@
 import logging
-import queue
 import sys
-import threading
 
-import pyaudiowpatch as pyaudio
 from PyQt6.QtWidgets import QApplication
-from .bounded_queue import DropOldestQueue
 
-from . import actions, config
-from .audio_capture import find_loopback_device, recorder_thread
-from .conversation_buffer import ConversationBuffer
+from . import actions
+from .application import Application
 from .hotkeys import register_hotkeys
 from .llm.factory import get_llm_client
 from .logging_config import setup_logging
 from .overlay import OverlayWindow
 from .signals import Signals
-from .transcriber import load_whisper_model, transcriber_thread
-from .vad_segmenter import segmenter_thread
 
 logger = logging.getLogger(__name__)
 
@@ -30,69 +23,31 @@ def main() -> None:
         logger.error(f"Не удалось инициализировать LLM-клиента: {e}")
         return
 
-    p = pyaudio.PyAudio()
-    device = find_loopback_device(p)
-    rate = int(device["defaultSampleRate"])
-    channels = int(device["maxInputChannels"])
-    p.terminate()
-
-    logger.info(f"Устройство: {device['name']}, rate={rate}, channels={channels}")
-    logger.info(f"LLM-провайдер: {config.LLM_PROVIDER}")
-    logger.info("Загружаю модель Whisper...")
-    model = load_whisper_model()
-    logger.info("Модель загружена.")
-
-    raw_queue = DropOldestQueue(maxsize=config.RAW_QUEUE_MAXSIZE, name="raw_queue")
-    speech_queue = DropOldestQueue(maxsize=config.SPEECH_QUEUE_MAXSIZE, name="speech_queue")
-    stop_event = threading.Event()
-    listening_event = threading.Event()
-    if config.LISTEN_ON_START:
-        listening_event.set()
-    buffer = ConversationBuffer()
-
-    app = QApplication(sys.argv)
+    qt_app = QApplication(sys.argv)
     signals = Signals()
 
-    def on_toggle_listen():
-        actions.toggle_listening(listening_event, buffer, signals)
+    app = Application(llm_client, signals)
+    app.prepare()
 
-    def on_explain():
-        threading.Thread(
-            target=actions.explain_transcript, args=(buffer, llm_client, signals), daemon=True
-        ).start()
+    def on_toggle_listen() -> None:
+        actions.toggle_listening(app.listening_event, app.buffer, signals)
 
-    def on_explain_screen():
-        threading.Thread(
-            target=actions.explain_screen, args=(buffer, llm_client, signals), daemon=True
-        ).start()
+    def on_explain() -> None:
+        actions.explain_transcript_async(app.buffer, llm_client, signals)
+
+    def on_explain_screen() -> None:
+        actions.explain_screen_async(app.buffer, llm_client, signals)
 
     window = OverlayWindow(signals, on_toggle_listen, on_explain, on_explain_screen)
-    window.closing.connect(stop_event.set)
     window.show()
 
-    register_hotkeys(buffer, llm_client, listening_event, signals)
+    app.start()
 
-    rec_thread = threading.Thread(
-        target=recorder_thread,
-        args=(device, rate, channels, raw_queue, stop_event, listening_event),
-        daemon=True,
-    )
-    seg_thread = threading.Thread(
-        target=segmenter_thread,
-        args=(rate, channels, raw_queue, speech_queue, stop_event),
-        daemon=True,
-    )
-    trans_thread = threading.Thread(
-        target=transcriber_thread,
-        args=(model, speech_queue, stop_event, buffer, signals),
-        daemon=True,
-    )
+    qt_app.aboutToQuit.connect(app.stop)
 
-    rec_thread.start()
-    seg_thread.start()
-    trans_thread.start()
-
-    sys.exit(app.exec())
+    exit_code = qt_app.exec()
+    app.stop()
+    sys.exit(exit_code)
 
 
 if __name__ == "__main__":

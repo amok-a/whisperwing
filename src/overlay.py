@@ -48,7 +48,6 @@ class TitleBar(QWidget):
 
 
 class OverlayWindow(QWidget):
-    closing = pyqtSignal()
 
     def __init__(self, signals, on_toggle_listen, on_explain, on_explain_screen):
         super().__init__()
@@ -146,6 +145,3 @@ class OverlayWindow(QWidget):
         elif "остановлено" in text:
             self.listen_btn.setText("▶ Слушать")
 
-    def closeEvent(self, event):
-        self.closing.emit()
-        super().closeEvent(event)

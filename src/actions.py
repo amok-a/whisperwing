@@ -70,3 +70,18 @@ def explain_screen(buffer: ConversationBuffer, llm_client: LLMClient, signals: S
     except Exception:
         logger.exception("Ошибка при обработке скриншота")
         signals.screen_explanation_ready.emit("Ошибка при запросе к LLM (см. логи).")
+
+def explain_transcript_async(
+    buffer: ConversationBuffer, llm_client: LLMClient, signals: Signals
+) -> None:
+    threading.Thread(
+        target=explain_transcript, args=(buffer, llm_client, signals), daemon=True
+    ).start()
+
+
+def explain_screen_async(
+    buffer: ConversationBuffer, llm_client: LLMClient, signals: Signals
+) -> None:
+    threading.Thread(
+        target=explain_screen, args=(buffer, llm_client, signals), daemon=True
+    ).start()
